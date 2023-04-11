@@ -1,0 +1,28 @@
+# Ignore Python byte code files
+*.pyc
+__pycache__/
+
+# Ignore virtual environment files
+venv/
+env/
+env.bak/
+ENV/
+ENV.bak/
+
+# Ignore pipenv files
+Pipfile.lock
+Pipfile.local
+.pipenv*
+
+# Ignore log files
+logs/
+*.log
+
+# Ignore AWS SAM local files
+.sam/
+.template.yaml
+.samconfig.toml
+
+# Ignore vscode settings
+.vscode/
+*.code-workspace
