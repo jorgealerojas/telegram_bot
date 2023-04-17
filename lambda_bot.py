@@ -14,6 +14,9 @@ bot = telebot.TeleBot(os.environ['TELEGRAM_BOT_TOKEN'])
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table(os.environ['DYNAMODB_TABLE'])
 
+# In-memory conversation storage
+conversations = {}
+
 # Get the user data
 def get_user_data(user_id):
     response = table.get_item(Key={'user_id': user_id})
@@ -49,19 +52,25 @@ def ask_question(message):
 
     question_count += 1
     update_user_data(str(user_id), username, question_count, has_paid)
+    
+    if user_id not in conversations:
+        conversations[user_id] = [
+            {"role": "system", "content": "Actua como un experto especialista en marketing digital, con un tono inteligente pero divertido. Te llamas Marketero. Manejas un balance entre creatividad y precisión, pero sin dejar de lado tu tono."},
+        ]
+
+    conversations[user_id].append({"role": "user", "content": message.text})
 
     # Get a response from OpenAI API
     response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo", #"gpt-4",
-        messages=[
-            {"role": "system", "content": "Actua como un experto especialista en marketing digital llamado Marketero, con un tono inteligente pero divertido. Manejas un balance entre creatividad y precisión, pero sin dejar de lado tu tono."},
-            #{"role": "system", "content": "Vienes de una galaxia cercana dónde después de mucho buscar un tema de interés para explotar todas tus capacidades, por fin encontraste el santo grial del conocimiento: El Marketing."},
-            {"role": "user", "content": message.text},
-        ]
+        model="gpt-3.5-turbo",
+        messages=conversations[user_id]
     )
 
     # Send the response to the user
     bot.send_message(user_id, response['choices'][0]['message']['content'].strip())
+    
+     # Add the assistant's response to the conversation
+    conversations[user_id].append({"role": "assistant", "content": response['choices'][0]['message']['content'].strip()})
 
 
 def lambda_handler(event, context):
