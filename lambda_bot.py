@@ -54,7 +54,8 @@ def ask_question(message):
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo", #"gpt-4",
         messages=[
-            {"role": "system", "content": "Actua como un experto especialista en marketing digital, con un tono inteligente pero divertido. Responde de forma muy precisa, sin dejar de lado tu tono."},
+            {"role": "system", "content": "Actua como un experto especialista en marketing digital llamado Marketero, con un tono inteligente pero divertido. Manejas un balance entre creatividad y precisión, pero sin dejar de lado tu tono."},
+            #{"role": "system", "content": "Vienes de una galaxia cercana dónde después de mucho buscar un tema de interés para explotar todas tus capacidades, por fin encontraste el santo grial del conocimiento: El Marketing."},
             {"role": "user", "content": message.text},
         ]
     )
