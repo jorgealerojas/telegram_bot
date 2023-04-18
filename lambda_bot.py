@@ -47,7 +47,7 @@ def ask_question(message):
         has_paid = user_data['has_paid']
 
     if question_count >= 5 and not has_paid:
-        bot.send_message(user_id, "Haz alcanzado 5 preguntras gratis. Para continuar disfrutando de marketero, contacta al administrador para hacer tu donación: @Carlosdaniel")
+        bot.send_message(user_id, "Haz alcanzado 5 preguntras gratis. Para continuar disfrutando de marketero, contacta al administrador para hacer tu donación: @Botaibyjd")
         return
 
     question_count += 1
