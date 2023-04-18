@@ -4,6 +4,7 @@ import telebot
 import boto3
 from boto3.dynamodb.conditions import Key
 import logging
+import threading
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -30,6 +31,12 @@ def update_user_data(user_id, username, question_count, has_paid):
 def has_user_paid(user_id):
     user_data = get_user_data(user_id)
     return user_data['has_paid'] if user_data and 'has_paid' in user_data else False
+
+# Check if more that 10 seconds has pass by since the first "iddle waiting" message  
+def send_second_message(user_id, sent_messages, response_received_event):
+    response_received_event.wait(10)  # Wait for 10 seconds
+    if not response_received_event.is_set():
+        sent_messages.append(bot.send_message(user_id, "Relax, ya viene la respuesta..."))
 
 # Handle text messages
 def ask_question(message):
@@ -59,12 +66,32 @@ def ask_question(message):
         ]
 
     conversations[user_id].append({"role": "user", "content": message.text})
+    
+    # Send a message with "Preparando respuesta..." to the user
+    sent_messages = [bot.send_message(user_id, "Preparando respuesta...")]
+    
+    # Create an event to signal when the response is received
+    response_received_event = threading.Event()
+    
+    # Start a separate thread to send the second message if needed
+    second_message_thread = threading.Thread(target=send_second_message, args=(user_id, sent_messages, response_received_event))
+    second_message_thread.start()
 
     # Get a response from OpenAI API
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=conversations[user_id]
     )
+    
+    # Signal that the response has been received
+    response_received_event.set()
+    
+    # Wait for the second_message_thread to finish
+    second_message_thread.join()
+    
+    # Delete the "Preparando respuesta..." message and the second message if it was sent
+    for message_to_delete in sent_messages:
+        bot.delete_message(user_id, message_to_delete.message_id)
 
     # Send the response to the user
     bot.send_message(user_id, response['choices'][0]['message']['content'].strip())
