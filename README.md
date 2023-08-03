@@ -1,15 +1,15 @@
 # telegram_bot
 
-Primero, para crear el bot debes interactuar con el @BotFather para crear tu bot y obtener el API de telegram.
+First, to create the bot you must interact with the @BotFather to create yours and get the telegram API.
 
-Una vez tengas el API, usando postman debes inicializar el webhook del bot: https://api.telegram.org/bot{TELEGRAM_API_KEY}/setWebhook
+Once you have the API, using postman you must initialize the bot's webhook: https://api.telegram.org/bot{TELEGRAM_API_KEY}/setWebhook
 
-Deberías obtener una respuesta como esta:
+You should get a response like this:
 
 {
-    "ok": true,
-    "result": true,
-    "description": "Webhook was set"
+     "ok": true,
+     "result": true,
+     "description": "Webhook was set"
 }
 
-Una vez inicializado, se debe subir el código a un proveedor cloud, en mi caso use AWS: Lambda, API Gateway y DynamoDB
+Once initialized, the code must be uploaded to a cloud provider, in my case I used AWS: Lambda, API Gateway and DynamoDB
