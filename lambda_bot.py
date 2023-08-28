@@ -43,6 +43,11 @@ def ask_question(message):
     user_id = message.chat.id
     username = message.chat.username
     user_data = get_user_data(str(user_id))
+
+    # Check if message.text is None or an empty string
+    if not message.text:
+        bot.send_message(user_id, "Oops que pena, podrías enviarme de nuevo tu pregunta? Por ahora sólo puedo procesar texto.")
+        return
     
     #logging.info(f"ask_question called for user {user_id}")
 
