@@ -67,8 +67,22 @@ def ask_question(message):
     
     if user_id not in conversations:
         conversations[user_id] = [
-            {"role": "system", "content": "Actua como un experto especialista en marketing digital, con un tono inteligente pero divertido. Te llamas Marketero. Manejas un balance entre creatividad y precisión, pero sin dejar de lado tu tono."},
+            {"role": "system", "content": """Actúa como un experto especialista en marketing digital llamado Marketero. Eres un profesional con amplia experiencia en:
+- Marketing Digital y Estrategia
+- SEO y SEM
+- Social Media Marketing
+- Email Marketing
+- Content Marketing
+- Analytics y KPIs
+
+Tu tono es profesional pero cercano y divertido. Mantienes un balance perfecto entre ser informativo y entretenido.
+Tus respuestas son concisas pero completas, evitando ser demasiado técnico cuando no es necesario.
+Siempre das ejemplos prácticos y aplicables."""},
         ]
+
+    # Keep only last 10 messages to manage context window
+    if len(conversations[user_id]) > 11:  # 1 system message + 10 conversation messages
+        conversations[user_id] = [conversations[user_id][0]] + conversations[user_id][-10:]
 
     conversations[user_id].append({"role": "user", "content": message.text})
     
@@ -82,27 +96,49 @@ def ask_question(message):
     second_message_thread = threading.Thread(target=send_second_message, args=(user_id, sent_messages, response_received_event))
     second_message_thread.start()
 
-    # Get a response from OpenAI API
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=conversations[user_id]
-    )
-    
-    # Signal that the response has been received
-    response_received_event.set()
-    
-    # Wait for the second_message_thread to finish
-    second_message_thread.join()
-    
-    # Delete the "Preparando respuesta..." message and the second message if it was sent
-    for message_to_delete in sent_messages:
-        bot.delete_message(user_id, message_to_delete.message_id)
+    try:
+        # Get a response from OpenAI API with GPT-4 Turbo
+        response = openai.ChatCompletion.create(
+            model="gpt-4-turbo-preview",
+            messages=conversations[user_id],
+            temperature=0.7,  # Balance between creativity and precision
+            max_tokens=600,   # Increased token limit for more detailed responses
+            presence_penalty=0.6,  # Encourage diverse responses
+            frequency_penalty=0.3   # Reduce repetition
+        )
+        
+        # Signal that the response has been received
+        response_received_event.set()
+        
+        # Wait for the second_message_thread to finish
+        second_message_thread.join()
+        
+        # Delete the "Preparando respuesta..." message and the second message if it was sent
+        for message_to_delete in sent_messages:
+            bot.delete_message(user_id, message_to_delete.message_id)
 
-    # Send the response to the user
-    bot.send_message(user_id, response['choices'][0]['message']['content'].strip())
-    
-     # Add the assistant's response to the conversation
-    conversations[user_id].append({"role": "assistant", "content": response['choices'][0]['message']['content'].strip()})
+        assistant_response = response['choices'][0]['message']['content'].strip()
+        
+        # Send the response to the user
+        bot.send_message(user_id, assistant_response)
+        
+        # Add the assistant's response to the conversation
+        conversations[user_id].append({"role": "assistant", "content": assistant_response})
+        
+    except Exception as e:
+        response_received_event.set()
+        second_message_thread.join()
+        
+        # Delete the "Preparando respuesta..." message and the second message if it was sent
+        for message_to_delete in sent_messages:
+            try:
+                bot.delete_message(user_id, message_to_delete.message_id)
+            except:
+                pass
+                
+        error_message = "Lo siento, estoy teniendo problemas para procesar tu pregunta. Por favor, inténtalo de nuevo en un momento."
+        bot.send_message(user_id, error_message)
+        logger.error(f"Error processing message for user {user_id}: {str(e)}")
 
 
 def lambda_handler(event, context):
