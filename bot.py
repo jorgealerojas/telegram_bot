@@ -5,7 +5,7 @@ from telebot import types
 
 # Initialize OpenAI API and Telegram Bot
 openai.api_key = os.environ['OPENAI_API_KEY']
-bot = telebot.TeleBot(os.environ['TELEGRAM_BOT_TOKEN']) #6164423440:AAG_DAGl0-EGbK8felNswgWuI36AS5jxg5M
+bot = telebot.TeleBot(os.environ['TELEGRAM_BOT_TOKEN'])
 
 # Keep track of user's question count
 user_question_count = {}
